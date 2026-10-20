@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Robux Realms — The Lost Crown</title>
+<style>
+:root{--gold:#ffd66b;--ink:#101a2a;--panel:rgba(13,24,43,.88);--line:rgba(255,224,153,.3)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b2e;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+canvas{display:block}#game{position:fixed;inset:0}
+.panel{background:linear-gradient(145deg,rgba(14,27,48,.94),rgba(18,31,53,.78));border:1px solid var(--line);box-shadow:0 10px 30px #0004;backdrop-filter:blur(8px);border-radius:15px}
+#hud{position:fixed;top:14px;left:14px;width:min(310px,calc(100vw - 28px));padding:14px 16px;pointer-events:none}
+.brand{font-weight:900;letter-spacing:.5px;font-size:20px;color:var(--gold);text-shadow:0 2px 12px #ffb52b55}.subtitle{font-size:11px;color:#c8d5e8;letter-spacing:1.7px;text-transform:uppercase;margin-top:2px}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}.pill{background:#ffffff12;border:1px solid #ffffff17;border-radius:20px;padding:5px 9px;font-size:12px;font-weight:750}
+#quest{position:fixed;top:14px;left:50%;transform:translateX(-50%);width:min(370px,calc(100vw - 350px));min-width:220px;padding:12px 16px;text-align:center}
+.eyebrow{color:var(--gold);font-size:10px;font-weight:900;letter-spacing:2px;text-transform:uppercase}.questTitle{font-size:15px;font-weight:850;margin:3px 0}.questText{font-size:12px;color:#cfdaeb}
+#help{position:fixed;right:14px;top:14px;padding:12px 14px;width:205px;font-size:12px;line-height:1.65;color:#dbe6f7}
+#help strong{color:var(--gold)}#bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;display:flex;gap:8px;align-items:center}
+.action{color:#fff;border:1px solid #ffdf8a55;background:linear-gradient(#5a4624,#322819);border-radius:10px;padding:10px 13px;font-weight:800;font-size:12px;cursor:pointer;box-shadow:0 4px 12px #0003}.action:hover{filter:brightness(1.2)}.action:active{transform:translateY(1px)}
+#toast{position:fixed;left:50%;top:23%;transform:translate(-50%,-10px);opacity:0;transition:.25s;background:#101a2aee;border:1px solid var(--line);border-radius:12px;padding:12px 18px;font-weight:750;pointer-events:none;text-align:center;max-width:min(90vw,420px);box-shadow:0 10px 35px #0005}
+#dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 32px));padding:22px;display:none;text-align:center}
+#dialog h2{color:var(--gold);margin:0 0 8px;font-size:23px}#dialog p{color:#d3deee;line-height:1.5;font-size:14px}.dialogButtons{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px}
+#mapTag{position:fixed;right:16px;bottom:16px;color:#e9f0fc;font-size:11px;background:#101a2ac9;border:1px solid #ffffff24;border-radius:9px;padding:7px 10px}
+#mobile{display:none;position:fixed;left:12px;bottom:16px;gap:7px;align-items:end}
+.pad{display:grid;grid-template-columns:repeat(3,39px);grid-template-rows:repeat(2,39px);gap:4px}.pad button,.mobAction{background:#10213bd9;color:white;border:1px solid #ffffff55;border-radius:10px;font-size:16px;font-weight:900;width:39px;height:39px}
+.pad .up{grid-column:2}.pad .left{grid-column:1;grid-row:2}.pad .down{grid-column:2;grid-row:2}.pad .right{grid-column:3;grid-row:2}.mobActions{display:flex;flex-direction:column;gap:5px}.mobAction{width:48px;height:42px;font-size:11px}
+#vignette{pointer-events:none;position:fixed;inset:0;box-shadow:inset 0 0 120px #07101c66}
+@media(max-width:720px){#help{display:none}#quest{top:auto;bottom:88px;left:50%;width:min(330px,calc(100vw - 24px));transform:translateX(-50%)}#hud{top:8px;left:8px;padding:10px;width:220px}.brand{font-size:16px}#mobile{display:flex}#bottom{bottom:14px;left:auto;right:10px;transform:none;flex-direction:column;align-items:stretch}#bottom .action{padding:8px 10px}#mapTag{display:none}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud" class="panel">
+  <div class="brand">✦ ROBUX REALMS</div><div class="subtitle">The Lost Crown · Fantasy Adventure</div>
+  <div class="stats"><div class="pill">🪙 <span id="coins">0</span> R-Coins</div><div class="pill">♥ <span id="health">100</span>%</div><div class="pill">✧ <span id="crystals">0</span>/8 Crystals</div></div>
+</div>
+<div id="quest" class="panel"><div class="eyebrow">Current Quest</div><div class="questTitle" id="questTitle">A Village in Need</div><div class="questText" id="questText">Find Elder Rowan near the village gate.</div></div>
+<div id="help" class="panel"><strong>CONTROLS</strong><br>WASD / arrows · Move<br>Mouse drag · Rotate camera<br>Shift · Sprint &nbsp; Space · Jump<br>E · Talk / open nearby chest<br>Q · Drink healing potion<br><br><strong>YOUR ADVENTURE</strong><br>Find Elder Rowan, gather 8 moon crystals, unlock the shrine, and claim the Lost Crown.</div>
+<div id="bottom"><button class="action" id="interact">✦ Interact (E)</button><button class="action" id="potion">♥ Potion (Q)</button><button class="action" id="restart">↻ Restart</button></div>
+<div id="mapTag">📍 Whispering Vale</div><div id="toast"></div><div id="vignette"></div>
+<div id="dialog" class="panel"><h2 id="dialogTitle">The Elder</h2><p id="dialogText"></p><div class="dialogButtons"><button class="action" id="dialogOk">Continue</button></div></div>
+<div id="mobile"><div class="pad"><button class="up" data-move="forward">▲</button><button class="left" data-move="left">◀</button><button class="down" data-move="back">▼</button><button class="right" data-move="right">▶</button></div><div class="mobActions"><button class="mobAction" id="mInteract">TALK</button><button class="mobAction" id="mJump">JUMP</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script>
+(() => {
+if(!window.THREE){document.body.innerHTML='<div style="padding:30px;color:white;font:18px system-ui">Robux Realms needs an internet connection to load its 3D engine. Please reconnect and refresh.</div>';return;}
+const $=id=>document.getElementById(id);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x91cbed);scene.fog=new THREE.Fog(0x91cbed,48,145);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,220);
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:"low-power"});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;document.getElementById('game').appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xd7f0ff,0x4e6840,2.0));
+const sun=new THREE.DirectionalLight(0xffe3b0,2.3);sun.position.set(-25,45,20);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;scene.add(sun);
+const mats={grass:mat(0x5b9b59),grass2:mat(0x76b95d),stone:mat(0x777f8d),path:mat(0xb9a982),wood:mat(0x6b4028),leaf:mat(0x276b4d),leaf2:mat(0x3d8a59),gold:mat(0xffc842),crystal:mat(0x72f5ff,0.25),water:mat(0x3b9ecb,0.12),roof:mat(0x743d48),wall:mat(0xe0cba0),blue:mat(0x4f6fa8),dark:mat(0x26364b),skin:mat(0xf1c79a),red:mat(0x9e5260),steel:mat(0x9cb5c5),purple:mat(0x8b6de0)};
+function mat(c,metal=0){return new THREE.MeshStandardMaterial({color:c,roughness:.82,metalness:metal})}
+const boxGeo=new THREE.BoxGeometry(1,1,1);
+function cube(parent,m,x,y,z,sx,sy,sz,cast=true){const o=new THREE.Mesh(boxGeo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=cast;o.receiveShadow=true;parent.add(o);return o}
+function sphere(parent,m,x,y,z,r,detail=1){const o=new THREE.Mesh(new THREE.IcosahedronGeometry(r,detail),m);o.position.set(x,y,z);o.castShadow=true;parent.add(o);return o}
+function group(parent,x=0,y=0,z=0){const g=new THREE.Group();g.position.set(x,y,z);parent.add(g);return g}
+const world=group(scene);
+// rolling-ish land and paths
+cube(world,mats.grass,0,-.7,0,150,1.2,150,false);
+function pathSegment(x,z,sx,sz,rot=0){let p=cube(world,mats.path,x,-.06,z,sx,.12,sz,false);p.rotation.y=rot;return p}
+pathSegment(0,0,5,54);pathSegment(0,-15,36,4);pathSegment(0,19,32,4);pathSegment(20,0,4,30);
+const water=cube(world,mats.water,0,-.25,-65,150,.25,28,false);
+// hills around edge
+for(let i=0;i<18;i++){let a=i/18*Math.PI*2,x=Math.cos(a)*58,z=Math.sin(a)*58;let h=8+(i%4)*2;sphere(world,mat([0x527d67,0x688d77,0x809f91][i%3]),x,h/2-1,z, h,1);}
+function tree(x,z,scale=1){const g=group(world,x,0,z);cube(g,mats.wood,0,1.5*scale,0,.65*scale,3*scale,.65*scale);let a=cube(g,mats.leaf,0,3.5*scale,0,3*scale,2.4*scale,3*scale);a.rotation.y=.2;let b=cube(g,mats.leaf2,.15*scale,4.7*scale,.1*scale,2.1*scale,1.8*scale,2.1*scale);b.rotation.y=.5;return g}
+for(let i=0;i<35;i++){let a=i*2.399,r=24+(i%6)*4,x=Math.cos(a)*r,z=Math.sin(a)*r;if(Math.abs(x)<12&&z>-24&&z<24)continue;tree(x,z,.7+(i%4)*.12)}
+// village buildings
+function house(x,z,color=0x884b55,scale=1){const g=group(world,x,0,z);cube(g,mats.wall,0,1.35,0,4*scale,2.7*scale,3.5*scale);cube(g,mats.wood,0,.85,1.77*scale,1.0*scale,1.7*scale,.12);let roof=cube(g,mat(color),0,3.05*scale,0,4.8*scale,.5*scale,4.2*scale);roof.rotation.z=-.25;cube(g,mat(color),0,3.05*scale,0,4.8*scale,.5*scale,4.2*scale).rotation.z=.25;cube(g,mats.dark,-.9*scale,1.8*scale,1.79*scale,.65*scale,.65*scale,.12);cube(g,mats.dark,.9*scale,1.8*scale,1.79*scale,.65*scale,.65*scale,.12);return g}
+house(-8,-13,0x8c4d57);house(8,-13,0x4d698d);house(-9,14,0x6e5a8e);house(8,14,0x9b6a42);house(25,-8,0x6c526f,.85);
+function tower(x,z){const g=group(world,x,0,z);cube(g,mats.stone,0,4,0,5,8,5);cube(g,mats.roof,0,8.5,0,6,.9,6);cube(g,mats.dark,0,2.4,2.53,1.4,2.5,.15);for(let i=0;i<4;i++)cube(g,mats.dark,-1.5+i,5,2.54,.45,.8,.12);return g}
+tower(30,22);tower(-29,-22);
+// bridge across stream at the northern edge
+for(let i=0;i<9;i++)cube(world,mats.wood,0,.1,-49+i*1.1,5,.3,.95);
+for(let s of [-1,1])cube(world,mats.wood,s*2.25,.7,-44, .2,1.3,10);
+// player character
+const player=group(scene,0,0,8);const avatar=group(player);
+cube(avatar,mats.blue,0,1.15,0,.85,1.05,.5);cube(avatar,mats.skin,0,2.0,0,.65,.65,.6);cube(avatar,mats.dark,0,2.38,-.02,.72,.18,.68);cube(avatar,mats.dark,-.17,2.07,.31,.07,.08,.04,false);cube(avatar,mats.dark,.17,2.07,.31,.07,.08,.04,false);cube(avatar,mats.red,-.47,1.1,0,.16,.85,.18);cube(avatar,mats.red,.47,1.1,0,.16,.85,.18);cube(avatar,mats.dark,-.23,.38,0,.25,.65,.28);cube(avatar,mats.dark,.23,.38,0,.25,.65,.28);cube(avatar,mats.steel,.6,1.3,.08,.14,.9,.14);
+const sword=cube(avatar,mats.steel,.63,1.3,.12,.12,.9,.12);sword.rotation.z=-.3;
+// NPC builder
+function npc(x,z,role,color){const g=group(world,x,0,z);cube(g,mat(color),0,1.1,0,.8,1,.5);cube(g,mats.skin,0,1.85,0,.58,.58,.58);cube(g,mats.gold,0,2.18,0,.68,.16,.68);cube(g,mats.dark,-.14,1.9,.3,.06,.07,.04,false);cube(g,mats.dark,.14,1.9,.3,.06,.07,.04,false);const mark=sphere(g,mats.gold,0,2.75,0,.18,1);return {g,role,mark}}
+const elder=npc(-1,-16,'elder',0x6f8caa),merchant=npc(14,-5,'merchant',0x8d5b9b),guardian=npc(0,-54,'guardian',0x6c7c94);
+function chest(x,z){const g=group(world,x,0,z);cube(g,mats.wood,0,.45,0,1.25,.8,.9);cube(g,mats.gold,0,.88,0,1.32,.18,.95);cube(g,mats.gold,0,.54,.48,.18,.27,.08);return {g,opened:false}}
+const chests=[chest(-14,4),chest(18,10),chest(27,-17),chest(-25,24)];
+const crystals=[];
+for(let i=0;i<8;i++){let a=i*2.4,r=15+(i%3)*8,x=Math.cos(a)*r,z=Math.sin(a)*r+2;let g=group(world,x,0,z);let c=sphere(g,mats.crystal,0,.8,0,.48,1);c.scale.set(.65,1.7,.65);const halo=new THREE.PointLight(0x62eaff,1.2,5);halo.position.y=1;g.add(halo);crystals.push({g,got:false,phase:i});}
+function shrine(){const g=group(world,0,0,-59);for(let i=0;i<8;i++){let a=i/8*Math.PI*2;cube(g,mats.stone,Math.cos(a)*4,1,Math.sin(a)*4,.8,2,.8).rotation.y=-a;}cube(g,mats.stone,0,.3,0,7,.6,7);let c=sphere(g,mats.purple,0,2.7,0,.8,1);c.material=mat(0x9c82ff,.35);const l=new THREE.PointLight(0x9276ff,2,14);l.position.y=3;g.add(l);return {g,c}}
+const shrineObj=shrine();
+let coins=0,health=100,crystalCount=0,questStage=0,potions=2,jumping=0,vy=0,velX=0,velZ=0,yaw=0,camYaw=0,camPitch=.32,toastTimer=0,dialogAction=null,gameWon=false;
+const keys={};let mobileMove={};const toast=(s)=>{const el=$('toast');el.textContent=s;el.style.opacity=1;el.style.transform='translate(-50%,0)';toastTimer=2.3};
+function updateHud(){$('coins').textContent=coins;$('health').textContent=health;$('crystals').textContent=crystalCount;$('questTitle').textContent=questStage===0?'A Village in Need':questStage===1?'Gather Moon Crystals':questStage===2?'The Ancient Shrine':'The Lost Crown';$('questText').textContent=questStage===0?'Find Elder Rowan near the village gate.':questStage===1?`Collect moon crystals (${crystalCount}/8). Explore the vale!`:questStage===2?'Reach the shrine beyond the northern bridge.':'You saved Whispering Vale. Explore freely!'}
+function showDialog(title,txt,action){$('dialogTitle').textContent=title;$('dialogText').textContent=txt;$('dialog').style.display='block';dialogAction=action}
+$('dialogOk').onclick=()=>{$('dialog').style.display='none';if(dialogAction)dialogAction();dialogAction=null};
+function nearest(){let best=null,dist=3.6;const targets=[{obj:elder.g,type:'elder'},{obj:merchant.g,type:'merchant'},...chests.filter(c=>!c.opened).map(c=>({obj:c.g,type:'chest',chest:c})),{obj:guardian.g,type:'guardian'}];for(const t of targets){let d=player.position.distanceTo(t.obj.position);if(d<dist){dist=d;best=t}}return best}
+function interact(){let t=nearest();if(!t){toast('Nothing nearby to interact with.');return}if(t.type==='elder'){if(questStage===0){showDialog('Elder Rowan','The vale is losing its light. Gather the eight moon crystals scattered among the trees, then carry their glow to the ancient shrine.',()=>{questStage=1;updateHud();toast('Quest started: Gather Moon Crystals!')})}else if(questStage===1){showDialog('Elder Rowan',`You have found ${crystalCount} of 8 crystals. Search the forest and old ruins.`,null)}else{showDialog('Elder Rowan','The shrine has awakened! You have brought hope back to the vale. Be proud, adventurer.',null)}}else if(t.type==='merchant'){showDialog('Mira the Trader',`I can offer a small field potion for 5 R-Coins. You have ${coins} R-Coins.`,()=>{if(coins>=5){coins-=5;potions++;updateHud();toast('Bought a healing potion!')}else toast('You need 5 R-Coins for a potion.')})}else if(t.type==='chest'){t.chest.opened=true;t.chest.g.rotation.x=-.6;coins+=5+Math.floor(Math.random()*6);updateHud();toast('Treasure found! R-Coins added.')}else if(t.type==='guardian'){if(crystalCount<8){showDialog('Shrine Guardian',`The shrine remains sealed. Bring me all 8 moon crystals. (${crystalCount}/8)`,null)}else if(questStage<3){showDialog('Shrine Guardian','The moon crystals are restored. The Lost Crown is yours, brave wanderer!',()=>{questStage=3;gameWon=true;updateHud();toast('QUEST COMPLETE — The Lost Crown is yours!')})}else{showDialog('Shrine Guardian','The vale is safe because of you. Your adventure is not over.',null)}}}
+$('interact').onclick=interact;$('mInteract').onclick=interact;$('potion').onclick=usePotion;
+function usePotion(){if(potions<1){toast('No potions left. Visit Mira the Trader.');return}if(health>=100){toast('Your health is already full.');return}potions--;health=Math.min(100,health+45);updateHud();toast('Potion used. Health restored!')}
+$('restart').onclick=()=>location.reload();$('mJump').onclick=()=>{if(jumping===0){vy=7.5;jumping=1}};
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();if(e.key.toLowerCase()==='e')interact();if(e.key.toLowerCase()==='q')usePotion();if(e.code==='Space'&&jumping===0){vy=7.5;jumping=1}});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+document.querySelectorAll('[data-move]').forEach(b=>{const k=b.dataset.move;b.addEventListener('pointerdown',e=>{e.preventDefault();mobileMove[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>mobileMove[k]=false))});
+let dragging=false,lastX=0,lastY=0;renderer.domElement.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'){dragging=true;lastX=e.clientX;lastY=e.clientY;renderer.domElement.setPointerCapture(e.pointerId)}});renderer.domElement.addEventListener('pointerup',()=>dragging=false);renderer.domElement.addEventListener('pointermove',e=>{if(dragging){camYaw-=(e.clientX-lastX)*.006;camPitch=Math.max(.08,Math.min(.7,camPitch+(e.clientY-lastY)*.003));lastX=e.clientX;lastY=e.clientY}});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+const clock=new THREE.Clock();let elapsed=0;
+function animate(){requestAnimationFrame(animate);let dt=Math.min(clock.getDelta(),.035);elapsed+=dt;if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0){$('toast').style.opacity=0;$('toast').style.transform='translate(-50%,-10px)'}}
+const f=(keys.w||keys.arrowup||mobileMove.forward?1:0)-(keys.s||keys.arrowdown||mobileMove.back?1:0);const r=(keys.d||keys.arrowright||mobileMove.right?1:0)-(keys.a||keys.arrowleft||mobileMove.left?1:0);const moving=Math.abs(f)+Math.abs(r)>0;let speed=(keys.shift?9:6);let dx=0,dz=0;if(moving){let dir=camYaw;dx=(Math.sin(dir)*f+Math.cos(dir)*r)*speed*dt;dz=(Math.cos(dir)*f-Math.sin(dir)*r)*speed*dt;let n=Math.hypot(dx,dz);if(n>speed*dt){dx*=speed*dt/n;dz*=speed*dt/n}player.position.x+=dx;player.position.z+=dz;yaw=Math.atan2(dx,dz);avatar.rotation.y=yaw;if(jumping===0){avatar.position.y=Math.sin(elapsed*13)*.045}}
+player.position.x=Math.max(-45,Math.min(45,player.position.x));player.position.z=Math.max(-66,Math.min(43,player.position.z));
+if(jumping){vy-=18*dt;avatar.position.y+=vy*dt;if(avatar.position.y<=0){avatar.position.y=0;vy=0;jumping=0}}
+camera.position.set(player.position.x-Math.sin(camYaw)*10,player.position.y+4.8+camPitch*3,player.position.z-Math.cos(camYaw)*10);camera.lookAt(player.position.x,player.position.y+1.2,player.position.z);
+crystals.forEach(c=>{if(c.got)return;c.g.position.y=.18+Math.sin(elapsed*2+c.phase)*.16;c.g.rotation.y=elapsed*.75;if(player.position.distanceTo(c.g.position)<1.6){c.got=true;world.remove(c.g);crystalCount++;coins+=2;updateHud();toast('Moon crystal found! +2 R-Coins');if(crystalCount===8){questStage=Math.max(questStage,2);updateHud();toast('All crystals found! Visit the northern shrine.')}}});
+chests.forEach(c=>{if(!c.opened)c.g.rotation.y=Math.sin(elapsed*1.2)*.05});
+[elder,merchant,guardian].forEach(n=>{n.mark.position.y=2.75+Math.sin(elapsed*2)*.12;n.mark.rotation.y=elapsed});
+if(shrineObj){shrineObj.c.rotation.y=elapsed*.45;shrineObj.c.position.y=2.7+Math.sin(elapsed*1.7)*.18}
+sun.position.x=-25+Math.sin(elapsed*.04)*10;
+renderer.render(scene,camera)}
+updateHud();camera.position.set(0,7,18);camera.lookAt(0,0,0);animate();
+})();
+</script>
+</body>
+</html>
